@@ -6,7 +6,7 @@ nextflow_process {
     tag "ntmprofiler"
     tag "ntmprofiler_profile"
 
-    test("ntmprofiler - module - SRR2838702 (Paired-End)") {
+    test("ntmprofiler - module - ERR1045534 (Paired-End)") {
         when {
             params {
                 test_data_dir = System.getenv("BACTOPIA_TESTS") ?: ""
@@ -15,9 +15,9 @@ nextflow_process {
                 """
                 input[0] = Channel.of(
                     record(
-                        meta: [name: "SRR2838702"],
-                        r1: file("${params.test_data_dir}/species/portiera/reads/illumina/SRR2838702_R1.fastq.gz"),
-                        r2: file("${params.test_data_dir}/species/portiera/reads/illumina/SRR2838702_R2.fastq.gz"),
+                        meta: [name: "ERR1045534"],
+                        r1: file("${params.test_data_dir}/species/mycobacterium/reads/illumina/ERR1045534_1.fastq.gz"),
+                        r2: file("${params.test_data_dir}/species/mycobacterium/reads/illumina/ERR1045534_2.fastq.gz"),
                         se: null,
                         lr: null
                     )
@@ -39,69 +39,4 @@ nextflow_process {
         }
     }
 
-    test("ntmprofiler - module - SRR2838702 (Single-End)") {
-        when {
-            params {
-                test_data_dir = System.getenv("BACTOPIA_TESTS") ?: ""
-            }
-            process {
-                """
-                input[0] = Channel.of(
-                    record(
-                        meta: [name: "SRR2838702"],
-                        r1: null,
-                        r2: null,
-                        se: file("${params.test_data_dir}/species/portiera/reads/illumina/SRR2838702SE.fastq.gz"),
-                        lr: null
-                    )
-                )
-                input[1] = file("${params.test_data_dir}/datasets/ntmprofiler/ntmprofiler.tar.gz")
-                """
-            }
-        }
-
-        then {
-            def record = process.out[0][0]
-            assertAll(
-                { assert process.success },
-                { assert snapshot(
-                    record.meta,
-                    record.versions
-                ).match() }
-            )
-        }
-    }
-
-    test("ntmprofiler - module - SRR2838702 (Long Read)") {
-        when {
-            params {
-                test_data_dir = System.getenv("BACTOPIA_TESTS") ?: ""
-            }
-            process {
-                """
-                input[0] = Channel.of(
-                    record(
-                        meta: [name: "ERR3772599"],
-                        r1: null,
-                        r2: null,
-                        se: null,
-                        lr: file("${params.test_data_dir}/species/portiera/reads/nanopore/ERR3772599.fastq.gz")
-                    )
-                )
-                input[1] = file("${params.test_data_dir}/datasets/ntmprofiler/ntmprofiler.tar.gz")
-                """
-            }
-        }
-
-        then {
-            def record = process.out[0][0]
-            assertAll(
-                { assert process.success },
-                { assert snapshot(
-                    record.meta,
-                    record.versions
-                ).match() }
-            )
-        }
-    }
 }

@@ -5,7 +5,7 @@ nextflow_workflow {
     tag "subworkflows"
     tag "ntmprofiler"
 
-    test("ntmprofiler - subworkflow - SRR2838702") {
+    test("ntmprofiler - subworkflow - ERR1045534") {
         when {
             params {
                 test_data_dir = System.getenv("BACTOPIA_TESTS") ?: ""
@@ -14,9 +14,9 @@ nextflow_workflow {
                 """
                 input[0] = Channel.of(
                     record(
-                        meta: [name: "SRR2838702"],
-                        r1: file("${params.test_data_dir}/species/portiera/reads/illumina/SRR2838702_R1.fastq.gz"),
-                        r2: file("${params.test_data_dir}/species/portiera/reads/illumina/SRR2838702_R2.fastq.gz"),
+                        meta: [name: "ERR1045534"],
+                        r1: file("${params.test_data_dir}/species/mycobacterium/reads/illumina/ERR1045534_1.fastq.gz"),
+                        r2: file("${params.test_data_dir}/species/mycobacterium/reads/illumina/ERR1045534_2.fastq.gz"),
                         se: null,
                         lr: null
                     )

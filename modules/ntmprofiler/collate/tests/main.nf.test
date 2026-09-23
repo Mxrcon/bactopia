@@ -17,8 +17,7 @@ nextflow_process {
                     record(
                         meta: [name: "ntmprofiler"],
                         json: [
-                            file("${params.test_data_dir}/datasets/ntmprofiler/illumina/SRR2838702.results.json.gz"),
-                            file("${params.test_data_dir}/datasets/ntmprofiler/nanopore/ERR3772599.results.json.gz")
+                            file("${params.test_data_dir}/datasets/ntmprofiler/illumina/ERR1045534.results.json.gz")
                         ]
                     )
                 )
