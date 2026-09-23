@@ -46,8 +46,9 @@
  * @input staphscan_db_mlst
  * Custom MLST database directory for StaphSCAN surveillance (optional)
  *
- * @input ntmprofiler_db
- * NTM-Profiler database directory or tarball created by `ntm-profiler update_db` (optional)
+ * @input ntmprofiler_db?
+ * Optional NTM-Profiler database directory or tarball created by `ntm-profiler update_db`;
+ * the tool default is used when omitted
  *
  * @output sample_outputs
  * Mixed per-sample records from merlindist and all activated species-specific typing
@@ -134,13 +135,9 @@ workflow MERLIN {
     // Mycobacterium
     ch_mycobacterium = ch_merlindist.sample_outputs.filter { r -> r.mycobacterium != null }
     ch_tbprofiler = TBPROFILER(ch_mycobacterium.map(forReads))
-    ch_ntmprofiler_sample_outputs = channel.empty()
-    ch_ntmprofiler_run_outputs = channel.empty()
-    if (ntmprofiler_db != null) {
-        ch_ntmprofiler = NTMPROFILER(ch_mycobacterium.map(forReads), ntmprofiler_db)
-        ch_ntmprofiler_sample_outputs = ch_ntmprofiler.sample_outputs
-        ch_ntmprofiler_run_outputs = ch_ntmprofiler.run_outputs
-    }
+    ch_ntmprofiler = NTMPROFILER(ch_mycobacterium.map(forReads), ntmprofiler_db)
+    ch_ntmprofiler_sample_outputs = ch_ntmprofiler.sample_outputs
+    ch_ntmprofiler_run_outputs = ch_ntmprofiler.run_outputs
 
     // Neisseria
     ch_neisseria = ch_merlindist.sample_outputs.filter { r -> r.neisseria != null }

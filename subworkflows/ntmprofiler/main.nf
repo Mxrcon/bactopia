@@ -18,8 +18,8 @@
  * - `se?`: Single-end Illumina reads
  * - `lr?`: Long reads (ONT/PacBio)
  *
- * @input db
- * Directory or compressed tarball containing the NTM-Profiler database
+ * @input db?
+ * Optional directory or compressed tarball containing a custom NTM-Profiler database
  *
  * @output sample_outputs
  * - `csv`: Per-sample results in CSV format
@@ -40,7 +40,7 @@ include { gather              } from 'plugin/nf-bactopia'
 workflow NTMPROFILER {
     take:
     reads: Channel<Record>
-    db: Path
+    db: Path?
 
     main:
     ch_ntmprofiler_profile = NTMPROFILER_PROFILE(reads, db)

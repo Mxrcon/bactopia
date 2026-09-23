@@ -34,8 +34,9 @@
  * @input staphscan_db_mlst
  * Path or tarball to custom MLST database for StaphSCAN surveillance
  *
- * @input ntmprofiler_db
- * NTM-Profiler database directory or tarball created by `ntm-profiler update_db`
+ * @input ntmprofiler_db?
+ * Optional NTM-Profiler database directory or tarball created by `ntm-profiler update_db`;
+ * the tool default is used when omitted
  *
  * @section Species-Specific Analysis
  * @note Tools executed depend on detected species

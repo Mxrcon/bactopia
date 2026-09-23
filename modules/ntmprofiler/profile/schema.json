@@ -15,7 +15,7 @@
                 "ntmprofiler_call_whole_genome": {"type": "boolean", "default": false, "description": "Call variants across the whole genome", "fa_icon": "fas fa-toggle-on"},
                 "ntmprofiler_caller": {"type": "string", "default": "freebayes", "enum": ["bcftools", "gatk", "freebayes"], "description": "Variant caller to use", "fa_icon": "fas fa-font"},
                 "ntmprofiler_calling_params": {"type": "string", "default": "", "description": "Override the default variant-calling parameters", "fa_icon": "fas fa-font"},
-                "ntmprofiler_db": {"type": "string", "description": "NTM-Profiler database created by update_db, as a directory or tarball", "fa_icon": "fas fa-font"},
+                "ntmprofiler_db": {"type": "string", "description": "Optional custom NTM-Profiler database created by update_db, as a directory or tarball; the tool default is used when omitted", "fa_icon": "fas fa-font"},
                 "ntmprofiler_mapper": {"type": "string", "default": "bwa", "enum": ["bwa", "minimap2", "bowtie2", "bwa-mem2"], "description": "Read mapper to use", "fa_icon": "fas fa-font"},
                 "ntmprofiler_min_species_relative_abundance": {"type": "number", "default": 2.0, "description": "Minimum relative abundance percentage for reporting a species", "fa_icon": "fas fa-percentage"},
                 "ntmprofiler_no_coverage_qc": {"type": "boolean", "default": false, "description": "Disable coverage statistics", "fa_icon": "fas fa-toggle-on"},

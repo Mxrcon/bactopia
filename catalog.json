@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "generated": "2026-09-23T09:52:07Z",
+  "generated": "2026-09-23T10:48:47Z",
   "bactopia_version": "4.1.0",
   "bactopia_py_version": "2.4.2",
   "nf_bactopia_version": "2.1.7",
@@ -4816,6 +4816,9 @@
         "staphscan_db_mlst",
         "ntmprofiler_db"
       ],
+      "takes_params_optional": [
+        "ntmprofiler_db"
+      ],
       "emits": {
         "sample_outputs": [],
         "run_outputs": []
@@ -5167,6 +5170,9 @@
         "lr"
       ],
       "takes_params": [
+        "db"
+      ],
+      "takes_params_optional": [
         "db"
       ],
       "emits": {

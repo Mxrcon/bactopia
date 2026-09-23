@@ -10,8 +10,8 @@
  * @tags complexity:moderate input-type:multiple output-type:multiple features:database-dependent,conditional-input
  * @citation ntmprofiler
  *
- * @note Database Required
- * Requires a database created by `ntm-profiler update_db`.
+ * @note Database Selection
+ * Uses the NTM-Profiler default database unless a custom database is provided.
  *
  * @input record(meta, r1?, r2?, se?, lr?)
  * - `meta`: Groovy Record containing sample information
@@ -20,8 +20,8 @@
  * - `se?`: Single-end Illumina reads
  * - `lr?`: Long reads (ONT/PacBio)
  *
- * @input db
- * Directory or compressed tarball containing the NTM-Profiler database
+ * @input db?
+ * Optional directory or compressed tarball containing a custom NTM-Profiler database
  *
  * @output record(meta, csv, json, txt, results, logs, nf_logs, versions)
  * - `csv`: Results in CSV format
@@ -50,7 +50,7 @@ process NTMPROFILER_PROFILE {
         se: Path?,
         lr: Path?
     )
-    db: Path
+    db: Path?
 
     output:
     record(
@@ -78,7 +78,10 @@ process NTMPROFILER_PROFILE {
     has_r2 = r2 != null
     has_se = se != null
     has_lr = lr != null
-    is_tarball = db.getName().endsWith(".tar.gz")
+    has_db = db != null
+    is_tarball = has_db && db.getName().endsWith(".tar.gz")
+    db_setup = has_db ? (is_tarball ? "tar -xzf ${db} -C database" : "cp -rL ${db}/. database/") : ""
+    db_arg = has_db ? "--db_dir database" : ""
     input_reads = has_lr ? "--read1 ${lr}" : (has_se ? "--read1 ${se}" : "--read1 ${r1} --read2 ${r2}")
     platform = has_lr ? "--platform nanopore" : "--platform illumina"
 
@@ -93,11 +96,7 @@ process NTMPROFILER_PROFILE {
     )
     """
     mkdir -p database results supplemental
-    if [ "${is_tarball}" == "true" ]; then
-        tar -xzf ${db} -C database
-    else
-        cp -rL ${db}/. database/
-    fi
+    ${db_setup}
 
     ntm-profiler \\
         profile \\
@@ -107,7 +106,7 @@ process NTMPROFILER_PROFILE {
         --txt \\
         --prefix ${prefix} \\
         --threads ${task.cpus} \\
-        --db_dir database \\
+        ${db_arg} \\
         --dir results \\
         ${input_reads}
 

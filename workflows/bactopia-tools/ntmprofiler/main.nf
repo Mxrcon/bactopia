@@ -4,7 +4,7 @@
  *
  * This Bactopia Tool uses [NTM-Profiler](https://github.com/jodyphelan/NTM-Profiler)
  * to identify nontuberculous Mycobacterium species and detect resistance-associated
- * variants using a user-provided NTM-Profiler database.
+ * variants using the default NTM-Profiler database or an optional custom database.
  *
  * @status stable
  * @keywords mycobacterium, ntm, species identification, antimicrobial resistance, surveillance
@@ -16,8 +16,9 @@
  * @input rundir
  * Directory containing results from a completed Bactopia analysis run
  *
- * @input ntmprofiler_db
- * Directory or compressed tarball created by `ntm-profiler update_db`
+ * @input ntmprofiler_db?
+ * Optional directory or compressed tarball created by `ntm-profiler update_db`.
+ * When omitted, NTM-Profiler uses its default database location.
  *
  * @section Per-Sample Results
  * @publish *.csv                      Per-sample profiling results in CSV format
@@ -41,7 +42,7 @@ nextflow.enable.types = true
 
 params {
     rundir : String
-    ntmprofiler_db : Path
+    ntmprofiler_db : Path?
 }
 
 include { BACTOPIATOOL_INIT   } from '../../../subworkflows/utils/bactopia-tools/main'
