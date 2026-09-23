@@ -1,12 +1,12 @@
 nextflow_pipeline {
-    name "Test TBProfiler Workflow"
+    name "Test NTMProfiler Workflow"
     script "../main.nf"
     config "../../../../conf/test.config"
     tag "workflows"
     tag "bactopia-tools"
-    tag "tbprofiler"
+    tag "ntmprofiler"
 
-    test("TBProfiler - SRR2838702|portiera|compressed_fasta") {
+    test("NTMProfiler - SRR2838702|portiera|compressed_fasta") {
         when {
             params {
                 bactopia_test = "/species/portiera/compressed"
@@ -17,6 +17,7 @@ nextflow_pipeline {
                 test_r2 = ""
                 test_se = ""
                 test_ont = ""
+                ntmprofiler_db = "${System.getenv('BACTOPIA_TESTS') ?: ''}/datasets/ntmprofiler/ntmprofiler.tar.gz"
                 is_ci = true
                 outdir = "$outputDir"
             }

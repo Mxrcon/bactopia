@@ -1,12 +1,12 @@
 nextflow_process {
-    name "Test TBPROFILER_COLLATE"
+    name "Test NTMPROFILER_COLLATE"
     script "../main.nf"
-    process "TBPROFILER_COLLATE"
+    process "NTMPROFILER_COLLATE"
     tag "modules"
-    tag "tbprofiler"
-    tag "tbprofiler_collate"
+    tag "ntmprofiler"
+    tag "ntmprofiler_collate"
 
-    test("tbprofiler collate - module - test") {
+    test("ntmprofiler collate - module - test") {
         when {
             params {
                 test_data_dir = System.getenv("BACTOPIA_TESTS") ?: ""
@@ -15,13 +15,14 @@ nextflow_process {
                 """
                 input[0] = Channel.of(
                     record(
-                        meta: [name: "tbprofiler"],
+                        meta: [name: "ntmprofiler"],
                         json: [
-                            file("${params.test_data_dir}/datasets/tbprofiler/illumina/SRR2838702.results.json.gz"),
-                            file("${params.test_data_dir}/datasets/tbprofiler/nanopore/ERR3772599.results.json.gz")
+                            file("${params.test_data_dir}/datasets/ntmprofiler/illumina/SRR2838702.results.json.gz"),
+                            file("${params.test_data_dir}/datasets/ntmprofiler/nanopore/ERR3772599.results.json.gz")
                         ]
                     )
                 )
+                input[1] = file("${params.test_data_dir}/datasets/ntmprofiler/ntmprofiler.tar.gz")
                 """
             }
         }
@@ -32,6 +33,8 @@ nextflow_process {
                 { assert process.success },
                 { assert snapshot(
                     record.meta,
+                    record.csv,
+                    record.variants_csv,
                     record.versions
                 ).match() }
             )

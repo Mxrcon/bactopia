@@ -1,27 +1,29 @@
 /**
- * Collate TB-Profiler results from multiple samples.
+ * Collate NTM-Profiler results from multiple samples.
  *
- * Uses [TBProfiler](https://github.com/jodyphelan/TBProfiler) to aggregate profiling results
- * from multiple samples into summary tables and files suitable for phylogenetic visualization.
+ * Uses [NTM-Profiler](https://github.com/jodyphelan/NTM-Profiler) to merge
+ * species, lineage, resistance, and variant results into run-level tables.
  *
  * @status stable
- * @keywords tuberculosis, mycobacterium, drug resistance, collate, summary
- * @tags complexity:moderate input-type:multiple output-type:multiple features:database-dependent,conditional-logic
- * @citation tbprofiler
+ * @keywords mycobacterium, ntm, species identification, antimicrobial resistance, summary
+ * @tags complexity:moderate input-type:multiple output-type:multiple features:database-dependent,aggregation
+ * @citation ntmprofiler
  *
  * @input record(meta, json)
  * - `meta`: Groovy Record containing sample information
- * - `json`: List of TB-Profiler JSON output files
+ * - `json`: NTM-Profiler JSON result files
  *
- * @output record(meta, csv, variants_csv, variants_txt, itol?, results, logs, nf_logs, versions)
- * - `csv`: Main collated results in CSV format
- * - `variants_csv`: Collated variants in CSV format
- * - `variants_txt`: Collated variants in text format
- * - `itol?`: iTOL formatted files for visualization
+ * @input db
+ * Directory or compressed tarball containing the NTM-Profiler database
+ *
+ * @output record(meta, csv, variants_csv, snp_dist_json?, results, logs, nf_logs, versions)
+ * - `csv`: Collated species, lineage, and resistance results
+ * - `variants_csv`: Collated variant calls
+ * - `snp_dist_json?`: SNP-distance graph when a distance database is present
  */
 nextflow.enable.types = true
 
-process TBPROFILER_COLLATE {
+process NTMPROFILER_COLLATE {
     tag "${prefix}"
     label 'process_medium'
 
@@ -29,10 +31,8 @@ process TBPROFILER_COLLATE {
     container "${task.ext.container}"
 
     input:
-    record (
-        meta: Record,
-        json: Set<Path>
-    )
+    record(meta: Record, json: Set<Path>)
+    db: Path
 
     stage:
     stageAs json, 'staging/json/*'
@@ -41,16 +41,14 @@ process TBPROFILER_COLLATE {
     record(
         // Named fields (used downstream)
         meta: meta,
-        csv: file("tbprofiler.csv"),
-        variants_csv: file("tbprofiler.variants.csv"),
-        variants_txt: file("tbprofiler.variants.txt"),
-        itol: files("*.itol.*.txt", optional: true),
+        csv: file("ntmprofiler.csv"),
+        variants_csv: file("ntmprofiler.csv.variants.csv"),
+        snp_dist_json: file("ntmprofiler.csv.snp-dist.json", optional: true),
         // Generic fields (used for publishing)
         results: [
-            files("tbprofiler.csv"),
-            files("tbprofiler.variants.csv"),
-            files("tbprofiler.variants.txt"),
-            files("*.itol.*.txt", optional: true)
+            files("ntmprofiler.csv"),
+            files("ntmprofiler.csv.variants.csv"),
+            files("ntmprofiler.csv.snp-dist.json", optional: true)
         ],
         logs: files("*.{log,err}", optional: true),
         nf_logs: files(".command.*"),
@@ -60,8 +58,7 @@ process TBPROFILER_COLLATE {
     script:
     def _meta = meta
     prefix = task.ext.prefix ?: "${_meta.name}"
-
-    // Create a new meta variable
+    is_tarball = db.getName().endsWith(".tar.gz")
     meta = record(
         id: "${prefix}-${task.process}",
         name: prefix,
@@ -71,27 +68,29 @@ process TBPROFILER_COLLATE {
         logs_dir: "merged-results/logs/${task.ext.process_name}"
     )
     """
-    # Copy database to working directory
-    mkdir -p database
-    cp -r \$(dirname \$(which tb-profiler))/../share/tbprofiler/* database/
-
-    # Uncompress the JSON files
-    mkdir results
+    mkdir -p database results
+    if [ "${is_tarball}" == "true" ]; then
+        tar -xzf ${db} -C database
+    else
+        cp -rL ${db}/. database/
+    fi
     cp -L staging/json/* results/
-    find results/ -name "*.json.gz" | xargs gunzip
+    find results -name '*.json.gz' -exec gunzip {} \\;
 
-    tb-profiler \\
+    ntm-profiler \\
         collate \\
         ${task.ext.args} \\
-        --db_dir database/ \\
+        --db_dir database \\
+        --dir results \\
+        --outfile ntmprofiler.csv \\
         --format csv
 
     # Cleanup
-    rm -rf results database
+    rm -rf database results
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        tb-profiler:  \$( echo \$(tb-profiler collate --version 2>&1) | sed 's/.*tb-profiler version //')
+        ntm-profiler: \$(ntm-profiler --version 2>&1 | sed 's/.*version //')
     END_VERSIONS
     """
 }

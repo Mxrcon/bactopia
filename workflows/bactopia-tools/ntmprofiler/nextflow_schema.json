@@ -1,8 +1,8 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://raw.githubusercontent.com/bactopia/bactopia/master/conf/schema/bactopia-tools.json",
-    "title": "tbprofiler",
-    "description": "Detection of antimicrobial resistance and lineage typing of Mycobacterium tuberculosis.",
+    "title": "ntmprofiler",
+    "description": "Identify NTM species and predict antimicrobial resistance from sequencing reads.",
     "type": "object",
     "$defs": {
         "input_parameters": {
@@ -42,108 +42,125 @@
                 }
             }
         },
-        "tbprofiler_profile_parameters": {
-            "title": "TB-Profiler Profile Parameters",
+        "ntmprofiler_profile_parameters": {
+            "title": "NTM-Profiler Profile Parameters",
             "type": "object",
             "description": "",
             "default": "",
             "fa_icon": "fas fa-exclamation-circle",
             "properties": {
-                "tbprofiler_call_whole_genome": {
+                "ntmprofiler_call_whole_genome": {
                     "type": "boolean",
                     "default": false,
-                    "description": "Call whole genome",
+                    "description": "Call variants across the whole genome",
                     "fa_icon": "fas fa-toggle-on"
                 },
-                "tbprofiler_mapper": {
+                "ntmprofiler_caller": {
+                    "type": "string",
+                    "default": "freebayes",
+                    "enum": [
+                        "bcftools",
+                        "gatk",
+                        "freebayes"
+                    ],
+                    "description": "Variant caller to use",
+                    "fa_icon": "fas fa-font"
+                },
+                "ntmprofiler_calling_params": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Override the default variant-calling parameters",
+                    "fa_icon": "fas fa-font"
+                },
+                "ntmprofiler_db": {
+                    "type": "string",
+                    "description": "NTM-Profiler database created by update_db, as a directory or tarball",
+                    "fa_icon": "fas fa-font"
+                },
+                "ntmprofiler_mapper": {
                     "type": "string",
                     "default": "bwa",
-                    "description": "Mapping tool to use. If you are using nanopore data it will default to minimap2",
-                    "fa_icon": "fas fa-font",
                     "enum": [
                         "bwa",
                         "minimap2",
                         "bowtie2",
                         "bwa-mem2"
-                    ]
+                    ],
+                    "description": "Read mapper to use",
+                    "fa_icon": "fas fa-font"
                 },
-                "tbprofiler_caller": {
+                "ntmprofiler_min_species_relative_abundance": {
+                    "type": "number",
+                    "default": 2.0,
+                    "description": "Minimum relative abundance percentage for reporting a species",
+                    "fa_icon": "fas fa-percentage"
+                },
+                "ntmprofiler_no_coverage_qc": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Disable coverage statistics",
+                    "fa_icon": "fas fa-toggle-on"
+                },
+                "ntmprofiler_no_delly": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Disable structural-variant calling with Delly",
+                    "fa_icon": "fas fa-toggle-on"
+                },
+                "ntmprofiler_no_species": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Skip species prediction",
+                    "fa_icon": "fas fa-toggle-on"
+                },
+                "ntmprofiler_no_trim": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Disable read trimming",
+                    "fa_icon": "fas fa-toggle-on"
+                },
+                "ntmprofiler_opts": {
                     "type": "string",
-                    "default": "freebayes",
-                    "description": "Variant calling tool to use",
-                    "fa_icon": "fas fa-font",
+                    "default": "",
+                    "description": "Additional NTM-Profiler profile options",
+                    "fa_icon": "fas fa-font"
+                },
+                "ntmprofiler_species_only": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Predict species without resistance profiling",
+                    "fa_icon": "fas fa-toggle-on"
+                },
+                "ntmprofiler_taxonomic_software": {
+                    "type": "string",
+                    "default": "sylph",
                     "enum": [
-                        "bcftools",
-                        "gatk",
-                        "freebayes"
-                    ]
-                },
-                "tbprofiler_calling_params": {
-                    "type": "string",
-                    "description": "Extra variant caller options in quotes",
-                    "help": "Useful if you would like to fine tune your variant calling analysis.",
-                    "fa_icon": "fas fa-font",
-                    "hidden": true
-                },
-                "tbprofiler_suspect": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Use the suspect suite of tools to add ML predictions",
-                    "fa_icon": "fas fa-toggle-on",
-                    "hidden": true
-                },
-                "tbprofiler_no_flagstat": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Don't collect flagstats",
-                    "fa_icon": "fas fa-toggle-on",
-                    "hidden": true
-                },
-                "tbprofiler_no_delly": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Don't run delly",
-                    "fa_icon": "fas fa-toggle-on",
-                    "hidden": true
-                },
-                "tbprofiler_opts": {
-                    "type": "string",
-                    "description": "Extra options in quotes for TBProfiler",
-                    "fa_icon": "fas fa-font",
-                    "hidden": false
+                        "sourmash",
+                        "sylph"
+                    ],
+                    "description": "Taxonomic identification method",
+                    "fa_icon": "fas fa-font"
                 }
             }
         },
-        "tbprofiler_collate_parameters": {
-            "title": "TB-Profiler Collate Parameters",
+        "ntmprofiler_collate_parameters": {
+            "title": "NTM-Profiler Collate Parameters",
             "type": "object",
             "description": "",
             "default": "",
             "fa_icon": "fas fa-exclamation-circle",
             "properties": {
-                "tbprofiler_itol": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Generate itol config files",
-                    "fa_icon": "fas fa-toggle-on"
+                "ntmprofiler_distance_cutoff": {
+                    "type": "integer",
+                    "default": 10,
+                    "description": "Maximum SNP distance represented in the optional graph output",
+                    "fa_icon": "fas fa-hashtag"
                 },
-                "tbprofiler_full": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Output mutations in main result file",
-                    "fa_icon": "fas fa-toggle-on"
-                },
-                "tbprofiler_all_variants": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Output all variants in variant matrix",
-                    "fa_icon": "fas fa-toggle-on"
-                },
-                "tbprofiler_mark_missing": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "An asterisk will be used to mark predictions which are affected by missing data at a drug resistance position",
-                    "fa_icon": "fas fa-toggle-on"
+                "ntmprofiler_min_species_relative_abundance": {
+                    "type": "number",
+                    "default": 2.0,
+                    "description": "Minimum relative abundance percentage for reporting a species",
+                    "fa_icon": "fas fa-percentage"
                 }
             }
         },
@@ -490,10 +507,10 @@
             "$ref": "#/$defs/filter_parameters"
         },
         {
-            "$ref": "#/$defs/tbprofiler_profile_parameters"
+            "$ref": "#/$defs/ntmprofiler_profile_parameters"
         },
         {
-            "$ref": "#/$defs/tbprofiler_collate_parameters"
+            "$ref": "#/$defs/ntmprofiler_collate_parameters"
         },
         {
             "$ref": "#/$defs/optional_parameters"

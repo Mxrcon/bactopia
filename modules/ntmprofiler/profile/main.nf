@@ -1,38 +1,41 @@
 /**
- * Detect resistance and lineages of Mycobacterium tuberculosis genomes.
+ * Identify NTM species and predict antimicrobial resistance from sequencing reads.
  *
- * Uses [TBProfiler](https://github.com/jodyphelan/TBProfiler) to profile *Mycobacterium tuberculosis*
- * data for drug resistance and lineage information by aligning reads to a reference genome and identifying
- * specific variants.
- *
- * Uses explicit positional record fields for reads:
- * - Input: record(meta, r1, r2, se, lr) where each read slot is Path?
+ * Uses [NTM-Profiler](https://github.com/jodyphelan/NTM-Profiler) to identify
+ * nontuberculous Mycobacterium species and, where a compatible database exists,
+ * detect resistance-associated variants and lineage barcodes.
  *
  * @status stable
- * @keywords tuberculosis, mycobacterium, drug resistance, amr, typing, variant calling
- * @tags complexity:moderate input-type:single output-type:multiple features:compression,conditional-logic
- * @citation tbprofiler, freebayes
+ * @keywords mycobacterium, ntm, species identification, antimicrobial resistance, variant calling
+ * @tags complexity:moderate input-type:multiple output-type:multiple features:database-dependent,conditional-input
+ * @citation ntmprofiler
+ *
+ * @note Database Required
+ * Requires a database created by `ntm-profiler update_db`.
  *
  * @input record(meta, r1?, r2?, se?, lr?)
  * - `meta`: Groovy Record containing sample information
- * - `r1?`: Illumina R1 reads (paired-end)
- * - `r2?`: Illumina R2 reads (paired-end)
+ * - `r1?`: Illumina R1 reads (paired-end forward)
+ * - `r2?`: Illumina R2 reads (paired-end reverse)
  * - `se?`: Single-end Illumina reads
  * - `lr?`: Long reads (ONT/PacBio)
  *
- * @output record(meta, csv?, json, txt?, results, logs, nf_logs, versions)
- * - `csv?`: Results in CSV format
- * - `json`: Compressed JSON results file
- * - `txt?`: Results in text format
+ * @input db
+ * Directory or compressed tarball containing the NTM-Profiler database
+ *
+ * @output record(meta, csv, json, txt, results, logs, nf_logs, versions)
+ * - `csv`: Results in CSV format
+ * - `json`: Compressed machine-readable profiling results
+ * - `txt`: Human-readable profiling report
  *
  * @results supplemental
- * - `*.bam`: Aligned reads in BAM format
- * - `*.bam.bai`: BAM index file
- * - `*.targets.csq.vcf.gz`: Variant calls with consequence annotations (VCF)
+ * - `*.bam`: Reads aligned to the selected species reference
+ * - `*.bam.bai`: BAM alignment index
+ * - `*.vcf.gz`: Variant calls and consequence annotations
  */
 nextflow.enable.types = true
 
-process TBPROFILER_PROFILE {
+process NTMPROFILER_PROFILE {
     tag "${prefix}"
     label 'process_medium'
 
@@ -47,20 +50,21 @@ process TBPROFILER_PROFILE {
         se: Path?,
         lr: Path?
     )
+    db: Path
 
     output:
     record(
         // Named fields (used downstream)
         meta: meta,
-        csv: file("${prefix}.csv", optional: true),
+        csv: file("${prefix}.csv"),
         json: file("${prefix}.results.json.gz"),
-        txt: file("${prefix}.txt", optional: true),
+        txt: file("${prefix}.txt"),
         // Generic fields (used for publishing)
         results: [
-            files("${prefix}.csv", optional: true),
+            files("${prefix}.csv"),
             files("${prefix}.results.json.gz"),
-            files("${prefix}.txt", optional: true),
-            files("supplemental/*")
+            files("${prefix}.txt"),
+            files("supplemental/*", optional: true)
         ],
         logs: files("*.{log,err}", optional: true),
         nf_logs: files(".command.*"),
@@ -70,14 +74,14 @@ process TBPROFILER_PROFILE {
     script:
     def _meta = meta
     prefix = task.ext.prefix ?: "${_meta.name}"
-
-    // Determine read type from explicit slots
     has_r1 = r1 != null
     has_r2 = r2 != null
     has_se = se != null
     has_lr = lr != null
+    is_tarball = db.getName().endsWith(".tar.gz")
+    input_reads = has_lr ? "--read1 ${lr}" : (has_se ? "--read1 ${se}" : "--read1 ${r1} --read2 ${r2}")
+    platform = has_lr ? "--platform nanopore" : "--platform illumina"
 
-    // Create a new meta variable
     meta = record(
         id: "${prefix}-${task.process}",
         name: prefix,
@@ -87,16 +91,15 @@ process TBPROFILER_PROFILE {
         process_name: task.ext.process_name,
         single_end: has_se && !has_r1 && !has_r2
     )
-
-    // Build read inputs and platform for tb-profiler
-    def input_reads = has_lr ? "--read1 ${lr}" : (meta.single_end ? "--read1 ${se}" : "--read1 ${r1} --read2 ${r2}")
-    def platform = has_lr ? "--platform nanopore" : "--platform illumina"
     """
-    # Copy database to working directory
-    mkdir -p database
-    cp -r \$(dirname \$(which tb-profiler))/../share/tbprofiler/* database/
+    mkdir -p database results supplemental
+    if [ "${is_tarball}" == "true" ]; then
+        tar -xzf ${db} -C database
+    else
+        cp -rL ${db}/. database/
+    fi
 
-    tb-profiler \\
+    ntm-profiler \\
         profile \\
         ${task.ext.args} \\
         ${platform} \\
@@ -104,42 +107,25 @@ process TBPROFILER_PROFILE {
         --txt \\
         --prefix ${prefix} \\
         --threads ${task.cpus} \\
-        --no_trim \\
-        --db_dir database/ \\
+        --db_dir database \\
+        --dir results \\
         ${input_reads}
 
-    # Move results
-    if [ -f "results/${prefix}.results.csv" ]; then
-        mv results/${prefix}.results.csv ./${prefix}.csv
-    fi
-
-    # SRR2838702.results.json
-    if [ -f "results/${prefix}.results.json" ]; then
-        # collate hard-matches "*.results.json"
-        gzip -c results/${prefix}.results.json > ${prefix}.results.json.gz
-    fi
-
-    # SRR2838702.results.txt
-    if [ -f "results/${prefix}.results.txt" ]; then
-        mv results/${prefix}.results.txt ./${prefix}.txt
-    fi
-
-    # Move bam and vcf folder if they exist
-    mkdir supplemental
-    if [ -d "bam/" ]; then
-        mv bam/* supplemental/
-    fi
-
-    if [ -d "vcf/" ]; then
-        mv vcf/* supplemental/
-    fi
+    mv results/${prefix}.results.csv ${prefix}.csv
+    gzip -c results/${prefix}.results.json > ${prefix}.results.json.gz
+    mv results/${prefix}.results.txt ${prefix}.txt
+    for result_file in results/*.bam results/*.bai results/*.vcf.gz results/*.bcf results/*.fa; do
+        if [ -e "\$result_file" ]; then
+            mv "\$result_file" supplemental/
+        fi
+    done
 
     # Cleanup
-    rm -rf results/ database/ bam/ vcf/
+    rm -rf database results
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        tb-profiler:  \$( echo \$(tb-profiler profile --version 2>&1) | sed 's/.*tb-profiler version //')
+        ntm-profiler: \$(ntm-profiler --version 2>&1 | sed 's/.*version //')
     END_VERSIONS
     """
 }

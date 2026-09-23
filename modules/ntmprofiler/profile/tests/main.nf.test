@@ -1,12 +1,12 @@
 nextflow_process {
-    name "Test TBPROFILER_PROFILE"
+    name "Test NTMPROFILER_PROFILE"
     script "../main.nf"
-    process "TBPROFILER_PROFILE"
+    process "NTMPROFILER_PROFILE"
     tag "modules"
-    tag "tbprofiler"
-    tag "tbprofiler_profile"
+    tag "ntmprofiler"
+    tag "ntmprofiler_profile"
 
-    test("tbprofiler - module - SRR2838702 (Paired-End)") {
+    test("ntmprofiler - module - SRR2838702 (Paired-End)") {
         when {
             params {
                 test_data_dir = System.getenv("BACTOPIA_TESTS") ?: ""
@@ -22,6 +22,7 @@ nextflow_process {
                         lr: null
                     )
                 )
+                input[1] = file("${params.test_data_dir}/datasets/ntmprofiler/ntmprofiler.tar.gz")
                 """
             }
         }
@@ -38,7 +39,7 @@ nextflow_process {
         }
     }
 
-    test("tbprofiler - module - SRR2838702 (Single-End)") {
+    test("ntmprofiler - module - SRR2838702 (Single-End)") {
         when {
             params {
                 test_data_dir = System.getenv("BACTOPIA_TESTS") ?: ""
@@ -54,6 +55,7 @@ nextflow_process {
                         lr: null
                     )
                 )
+                input[1] = file("${params.test_data_dir}/datasets/ntmprofiler/ntmprofiler.tar.gz")
                 """
             }
         }
@@ -70,7 +72,7 @@ nextflow_process {
         }
     }
 
-    test("tbprofiler - module - SRR2838702 (Long Read)") {
+    test("ntmprofiler - module - SRR2838702 (Long Read)") {
         when {
             params {
                 test_data_dir = System.getenv("BACTOPIA_TESTS") ?: ""
@@ -86,6 +88,7 @@ nextflow_process {
                         lr: file("${params.test_data_dir}/species/portiera/reads/nanopore/ERR3772599.fastq.gz")
                     )
                 )
+                input[1] = file("${params.test_data_dir}/datasets/ntmprofiler/ntmprofiler.tar.gz")
                 """
             }
         }
